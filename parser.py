@@ -1,5 +1,6 @@
 import code
-from pypeg2 import *
+from model import error
+from pypeg2 import Symbol, List, K, optional, csl, attr, maybe_some, name, parse as pypeg_parse
 
 Symbol.check_keywords = True
 
@@ -52,3 +53,15 @@ class Atom:
         return code.atom(self.name.name)
 
 Expression.grammar = [Lambda, Table, Atom, Name], maybe_some('(', Expression, ')')
+
+def parse(source, environment):
+    '''
+     - source - str
+     - environment - dict from str to Value.
+    '''
+    tree = pypeg_parse(source, Expression)
+    env = code.Environment(constant=environment.get)
+    expr = tree.compile(env)
+    for name in env.free_variables:
+        error(f"Unknown variable {name}")
+    return expr
