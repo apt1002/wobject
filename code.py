@@ -21,7 +21,7 @@ class Environment:
 
     def compile(self, name_):
         assert type(name_) is str
-        value = self.constant(name)
+        value = self.constant(name_)
         if value is not None:
             return constant(name_, value)
         self.free_variables.add(name_)
@@ -32,6 +32,7 @@ def name(name):
      - name - str.
     '''
     return model.Table({
+        'tag': model.Atom('name'),
         'name': model.Atom(name),
     })
 
@@ -41,7 +42,9 @@ def lambda_(captures, parameter, body):
      - parameter - str.
      - body - Table - compiled code.
     '''
+    assert type(body) is model.Table
     return model.Table({
+        'tag': model.Atom('lambda'),
         'captures': model.Table(dict(captures)),
         'parameter': model.Atom(parameter),
         'body': body,
@@ -53,6 +56,7 @@ def apply(function, argument):
      - argument - Value.
     '''
     return model.Table({
+        'tag': model.Atom('apply'),
         'function': function,
         'argument': argument,
     })
@@ -62,6 +66,7 @@ def table(iterable):
      - entries - iterable of (str, Value).
     '''
     return model.Table({
+        'tag': model.Atom('table'),
         'table': model.Table(dict(iterable)),
     })
 
@@ -71,6 +76,7 @@ def constant(name, value):
      - value - Value.
     '''
     return model.Table({
+        'tag': model.Atom('constant'),
         'constant': value,
         'debug': model.Atom(name),
     })
@@ -80,22 +86,23 @@ def atom(name):
      - name - str.
     '''
     return model.Table({
+        'tag': model.Atom('constant'),
         'constant': model.Atom(name),
     })
 
 class Visitor:
     def __init__(self):
         self.cases = {
-            'constant': lambda constant=None: self.constant(constant),
-            'name': lambda name=None: self.name(name),
-            'captures': lambda captures=None, parameter=None, body=None: self.lambda_(captures, parameter, body),
-            'function': lambda function=None, argument=None: self.apply(function, argument),
-            'table': lambda table=None: self.table(table),
+            'constant': lambda d: self.constant(d['constant']),
+            'name': lambda d: self.name(d['name']),
+            'lambda': lambda d: self.lambda_(d['captures'], d['parameter'], d['body']),
+            'apply': lambda d: self.apply(d['function'], d['argument']),
+            'table': lambda d: self.table(d['dict']),
         }
 
     def __call__(self, value):
         assert type(value) is model.Table, value
-        value.switch(self.cases)
+        return value.switch(self.cases)
 
     def constant(self, constant):
         raise NotImplemented
@@ -109,5 +116,5 @@ class Visitor:
     def apply(self, function, argument):
         raise NotImplemented
 
-    def table(self, table):
+    def table(self, dict_):
         raise NotImplemented

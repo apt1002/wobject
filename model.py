@@ -30,24 +30,23 @@ class Table(Value, namedtuple('Table', ['dict'])):
     def __repr__(self):
         return f"Table({self.dict})"
 
-    def switch(self, cases, default=lambda **kwargs: error(f"No case matched {self}")):
+    def switch(self, cases, default=None):
         '''
-        Finds a `key` that is in both `self.table` and `cases`, and calls
-        `cases[key](**self.table)`, or `default(**self.table)` if there is no
-        such `key`.
+        Calls `cases[self.dict['tag']](self.dict)`, or
+        `default(self.dict)` if there is no such case.
          - cases - dict from str to function from dict.
          - default - function from dict.
         '''
-        for key in cases:
-            if key in self.table:
-                return cases[key](**self.table)
-        default(**self.table)
-        
+        case = cases.get(self.dict['tag'].name) or default
+        if not case:
+            error(f"No case matched {self.dict['tag'].name}")
+        return case(self.dict)
+
 class Lambda(Value, namedtuple('Lambda', ['captures', 'parameter', 'body'])):
     '''A function.'''
-    def __init__(self, captures, parameter, code):
-        assert isinstance(captures, Table), captures
-        assert isinstance(parameter, Atom), parameter
+    def __init__(self, captures, parameter, body):
+        assert isinstance(captures, dict), captures
+        assert isinstance(parameter, str), parameter
         assert isinstance(body, Table), body
 
     def __repr__(self):
