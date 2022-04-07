@@ -24,12 +24,12 @@ class Lambda:
     grammar = K('fn'), attr('parameter', Name), '{', attr('body', Expression), '}'
 
     def compile(self, environment):
-        parameter = self.parameter.name
+        parameter = self.parameter.name.name
         body_environment = code.Environment(
             constant=lambda name: None if name == parameter else environment.constant(name)
         )
         body = self.body.compile(body_environment)
-        captures = code.table(
+        captures = (
             (name, environment.compile(name))
             for name in body_environment.free_variables
             if name != parameter

@@ -39,11 +39,10 @@ def lambda_(captures, parameter, body):
     '''
      - captures - iterable of (str, Value).
      - parameter - str.
-     - body - algebraic Value.
+     - body - Table - compiled code.
     '''
-    model.assert_algebraic(body)
     return model.Table({
-        'captures': model.Table(captures),
+        'captures': model.Table(dict(captures)),
         'parameter': model.Atom(parameter),
         'body': body,
     })

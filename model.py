@@ -43,17 +43,12 @@ class Table(Value, namedtuple('Table', ['dict'])):
                 return cases[key](**self.table)
         default(**self.table)
         
-
-def assert_algebraic(v):
-    assert isinstance(v, Tuple), v
-    assert isinstance(v.tuple[0], Atom), v
-
 class Lambda(Value, namedtuple('Lambda', ['captures', 'parameter', 'body'])):
     '''A function.'''
     def __init__(self, captures, parameter, code):
         assert isinstance(captures, Table), captures
         assert isinstance(parameter, Atom), parameter
-        assert_algebraic(body)
+        assert isinstance(body, Table), body
 
     def __repr__(self):
         return f"Lambda({self.captures}, {self.parameter}, {self.body})"
