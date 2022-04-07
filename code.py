@@ -27,37 +27,13 @@ class Environment:
         self.free_variables.add(name_)
         return name(name_)
 
-# Atoms used to tag expressions.
-CONSTANT = model.Atom('Constant')
-TUPLE = model.Atom('Tuple')
-TABLE = model.Atom('Table')
-LAMBDA = model.Atom('Lambda')
-APPLY = model.Atom('Apply')
-NAME = model.Atom('Name')
-
-def constant(name, value):
+def name(name):
     '''
-     - name - str (for debugging only).
-     - value - Value.
+     - name - str.
     '''
-    return model.Tuple((CONSTANT, model.Atom(name), value))
-
-def tuple_(iterable):
-    '''
-     - values - iterable of Value.
-    '''
-    values = model.Tuple(tuple(iterable))
-    return model.Tuple((TUPLE, values))
-
-def table(iterable):
-    '''
-     - entries - iterable of (str, Value).
-    '''
-    entries = model.Table({
-        model.Atom(name): value
-        for name, value in iterable
+    return model.Table({
+        'name': model.Atom(name),
     })
-    return model.Tuple((TABLE, entries))
 
 def lambda_(captures, parameter, body):
     '''
@@ -65,19 +41,74 @@ def lambda_(captures, parameter, body):
      - parameter - str.
      - body - algebraic Value.
     '''
-    captures = model.Table(captures)
-    parameter = model.Atom(parameter)
     model.assert_algebraic(body)
-    return model.Tuple((LAMBDA, captures, parameter, body))
+    return model.Table({
+        'captures': model.Table(captures),
+        'parameter': model.Atom(parameter),
+        'body': body,
+    })
 
-def name(name):
+def apply(function, argument):
     '''
-     - name - str.
+     - function - Value.
+     - argument - Value.
     '''
-    return model.Tuple((NAME, model.Atom(name)))
+    return model.Table({
+        'function': function,
+        'argument': argument,
+    })
+
+def table(iterable):
+    '''
+     - entries - iterable of (str, Value).
+    '''
+    return model.Table({
+        'table': model.Table(dict(iterable)),
+    })
+
+def constant(name, value):
+    '''
+     - name - str (for debugging only).
+     - value - Value.
+    '''
+    return model.Table({
+        'constant': value,
+        'debug': model.Atom(name),
+    })
 
 def atom(name):
     '''
      - name - str.
     '''
-    return constant(name, model.Atom(name))
+    return model.Table({
+        'constant': model.Atom(name),
+    })
+
+class Visitor:
+    def __init__(self):
+        self.cases = {
+            'constant': lambda constant=None: self.constant(constant),
+            'name': lambda name=None: self.name(name),
+            'captures': lambda captures=None, parameter=None, body=None: self.lambda_(captures, parameter, body),
+            'function': lambda function=None, argument=None: self.apply(function, argument),
+            'table': lambda table=None: self.table(table),
+        }
+
+    def __call__(self, value):
+        assert type(value) is model.Table, value
+        value.switch(self.cases)
+
+    def constant(self, constant):
+        raise NotImplemented
+
+    def name(self, name):
+        raise NotImplemented
+
+    def lambda_(self, captures, parameter, body):
+        raise NotImplemented
+
+    def apply(self, function, argument):
+        raise NotImplemented
+
+    def table(self, table):
+        raise NotImplemented

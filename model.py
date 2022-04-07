@@ -2,6 +2,12 @@
 
 from collections import namedtuple
 
+class WError(Exception):
+    pass
+
+def error(message):
+    raise WError(message)
+
 class Value:
     pass
 
@@ -13,26 +19,30 @@ class Atom(Value, namedtuple('Atom', ['name'])):
     def __repr__(self):
         return f"Atom('{self.name}')"
 
-class Tuple(Value, namedtuple('Tuple', ['tuple'])):
-    '''A tuple.'''
-    def __init__(self, tuple_):
-        assert type(tuple_) is tuple, tuple_
-        for v in tuple_:
-            assert isinstance(v, Value), v
-
-    def __repr__(self):
-        return f"Tuple({self.tuple})"
-
 class Table(Value, namedtuple('Table', ['dict'])):
     '''A hash table.'''
     def __init__(self, dict_):
         assert isinstance(dict_, dict), dict_
         for key, value in dict_.items():
-            assert isinstance(key, Atom), key
+            assert isinstance(key, str), key
             assert isinstance(value, Value), value
 
     def __repr__(self):
         return f"Table({self.dict})"
+
+    def switch(self, cases, default=lambda **kwargs: error(f"No case matched {self}")):
+        '''
+        Finds a `key` that is in both `self.table` and `cases`, and calls
+        `cases[key](**self.table)`, or `default(**self.table)` if there is no
+        such `key`.
+         - cases - dict from str to function from dict.
+         - default - function from dict.
+        '''
+        for key in cases:
+            if key in self.table:
+                return cases[key](**self.table)
+        default(**self.table)
+        
 
 def assert_algebraic(v):
     assert isinstance(v, Tuple), v
