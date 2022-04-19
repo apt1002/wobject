@@ -37,7 +37,7 @@ class Table(Value, namedtuple('Table', ['dict'])):
          - cases - dict from str to function from dict.
          - default - function from dict.
         '''
-        case = cases.get(self.dict['tag'].name) or default
+        case = cases.get(self.dict[''].name) or default
         if not case:
             error(f"No case matched {self.dict['tag'].name}")
         return case(self.dict)
@@ -51,3 +51,5 @@ class Lambda(Value, namedtuple('Lambda', ['captures', 'parameter', 'body'])):
 
     def __repr__(self):
         return f"Lambda({self.captures}, {self.parameter}, {self.body})"
+
+NULL = Atom('')

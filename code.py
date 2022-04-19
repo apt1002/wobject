@@ -32,7 +32,7 @@ def name(name):
      - name - str.
     '''
     return model.Table({
-        'tag': model.Atom('name'),
+        '': model.Atom('name'),
         'name': model.Atom(name),
     })
 
@@ -44,7 +44,7 @@ def lambda_(captures, parameter, body):
     '''
     assert type(body) is model.Table
     return model.Table({
-        'tag': model.Atom('lambda'),
+        '': model.Atom('lambda'),
         'captures': model.Table(dict(captures)),
         'parameter': model.Atom(parameter),
         'body': body,
@@ -56,7 +56,7 @@ def apply(function, argument):
      - argument - Value.
     '''
     return model.Table({
-        'tag': model.Atom('apply'),
+        '': model.Atom('apply'),
         'function': function,
         'argument': argument,
     })
@@ -66,7 +66,7 @@ def table(iterable):
      - entries - iterable of (str, Value).
     '''
     return model.Table({
-        'tag': model.Atom('table'),
+        '': model.Atom('table'),
         'table': model.Table(dict(iterable)),
     })
 
@@ -76,7 +76,7 @@ def constant(name, value):
      - value - Value.
     '''
     return model.Table({
-        'tag': model.Atom('constant'),
+        '': model.Atom('constant'),
         'constant': value,
         'debug': model.Atom(name),
     })
@@ -86,7 +86,7 @@ def atom(name):
      - name - str.
     '''
     return model.Table({
-        'tag': model.Atom('constant'),
+        '': model.Atom('constant'),
         'constant': model.Atom(name),
     })
 

@@ -1,5 +1,5 @@
 from code import Visitor
-from model import Table, Lambda
+from model import Table, Lambda, NULL
 
 class Evaluate(Visitor):
     '''
@@ -38,9 +38,14 @@ class Evaluate(Visitor):
             for name, expression in table.dict.items()
         })
 
+def built_ins():
+    return {
+        'null': NULL,
+    }
+
 if __name__ == '__main__':
     from parser import  parse
-    environment = {}
+    environment = built_ins()
     e = parse('fn x {fn y {x}}', environment)
     environment['k'] = Evaluate({})(e)
     a = parse('k(@foo)(@bar)', environment)
