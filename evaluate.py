@@ -10,7 +10,11 @@ def evaluate_dict(environment, dict_):
 ACTIONS = {
     'constant': lambda _, d: d['constant'],
     'name': lambda e, d: e.environment[d['name'].name],
-    'lambda': lambda e, d: e.lambda_(d['captures'], d['parameter'], d['body']),
+    'lambda': lambda e, d: Lambda(
+        evaluate_dict(e, d['captures'].dict),
+        d['parameter'].name,
+        d['body'],
+    ),
     'apply': lambda e, d: e.apply(d['function'], d['argument']),
     'table': lambda e, d: Table(evaluate_dict(e, d['table'].dict)),
 }
@@ -32,9 +36,6 @@ class Evaluate:
     '''
     def __init__(self, environment):
         self.environment = environment
-
-    def lambda_(self, captures, parameter, body):
-        return Lambda(evaluate_dict(self, captures.dict), parameter.name, body)
 
     def apply(self, function, argument):
         function = evaluate(self, function)
