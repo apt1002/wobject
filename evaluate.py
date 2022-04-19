@@ -1,11 +1,14 @@
 from model import Table, Lambda, NULL
 
 ACTIONS = {
-    'constant': lambda e, d: e.constant(d['constant']),
-    'name': lambda e, d: e.name(d['name']),
+    'constant': lambda _, d: d['constant'],
+    'name': lambda e, d: e.environment[d['name'].name],
     'lambda': lambda e, d: e.lambda_(d['captures'], d['parameter'], d['body']),
     'apply': lambda e, d: e.apply(d['function'], d['argument']),
-    'table': lambda e, d: e.table(d['table']),
+    'table': lambda e, d: Table({
+        name: evaluate(e, expression)
+        for name, expression in d['table'].dict.items()
+    }),
 }
 
 def evaluate(environment, expression):
@@ -26,12 +29,6 @@ class Evaluate:
     def __init__(self, environment):
         self.environment = environment
 
-    def constant(self, constant):
-        return constant
-
-    def name(self, name):
-        return self.environment[name.name]
-
     def lambda_(self, captures, parameter, body):
         captures = {
             name: evaluate(self, expression)
@@ -46,12 +43,6 @@ class Evaluate:
         body_environment = dict(function.captures)
         body_environment[function.parameter] = argument
         return evaluate(Evaluate(body_environment), function.body)
-
-    def table(self, table):
-        return Table({
-            name: evaluate(self, expression)
-            for name, expression in table.dict.items()
-        })
 
 def built_ins():
     return {
