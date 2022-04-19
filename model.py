@@ -30,18 +30,6 @@ class Table(Value, namedtuple('Table', ['dict'])):
     def __repr__(self):
         return f"Table({self.dict})"
 
-    def switch(self, cases, default=None):
-        '''
-        Calls `cases[self.dict['tag']](self.dict)`, or
-        `default(self.dict)` if there is no such case.
-         - cases - dict from str to function from dict.
-         - default - function from dict.
-        '''
-        case = cases.get(self.dict[''].name) or default
-        if not case:
-            error(f"No case matched {self.dict['tag'].name}")
-        return case(self.dict)
-
 class Lambda(Value, namedtuple('Lambda', ['captures', 'parameter', 'body'])):
     '''A function.'''
     def __init__(self, captures, parameter, body):

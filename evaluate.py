@@ -6,7 +6,8 @@ def evaluate(environment, expression):
      - expression - model.Value representing code.
     '''
     assert type(expression) is Table, expression
-    return expression.switch(environment.cases)
+    case = environment.cases[expression.dict[''].name]
+    return case(expression.dict)
 
 class Evaluate:
     '''
