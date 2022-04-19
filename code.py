@@ -89,32 +89,3 @@ def atom(name):
         '': model.Atom('constant'),
         'constant': model.Atom(name),
     })
-
-class Visitor:
-    def __init__(self):
-        self.cases = {
-            'constant': lambda d: self.constant(d['constant']),
-            'name': lambda d: self.name(d['name']),
-            'lambda': lambda d: self.lambda_(d['captures'], d['parameter'], d['body']),
-            'apply': lambda d: self.apply(d['function'], d['argument']),
-            'table': lambda d: self.table(d['dict']),
-        }
-
-    def __call__(self, value):
-        assert type(value) is model.Table, value
-        return value.switch(self.cases)
-
-    def constant(self, constant):
-        raise NotImplemented
-
-    def name(self, name):
-        raise NotImplemented
-
-    def lambda_(self, captures, parameter, body):
-        raise NotImplemented
-
-    def apply(self, function, argument):
-        raise NotImplemented
-
-    def table(self, dict_):
-        raise NotImplemented
