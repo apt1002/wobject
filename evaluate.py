@@ -20,7 +20,7 @@ class Evaluate:
             'name': lambda d: self.name(d['name']),
             'lambda': lambda d: self.lambda_(d['captures'], d['parameter'], d['body']),
             'apply': lambda d: self.apply(d['function'], d['argument']),
-            'table': lambda d: self.table(d['dict']),
+            'table': lambda d: self.table(d['table']),
         }
         self.environment = environment
 
@@ -61,5 +61,5 @@ if __name__ == '__main__':
     environment = built_ins()
     e = parse('fn x {fn y {x}}', environment)
     environment['k'] = evaluate(Evaluate({}), e)
-    a = parse('k(@foo)(@bar)', environment)
+    a = parse('{a: k(@foo)(@bar)}', environment)
     print(evaluate(Evaluate({}), a))
