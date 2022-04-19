@@ -7,6 +7,16 @@ def evaluate_dict(environment, dict_):
         for name, expression in dict_.items()
     }
 
+def apply(function, argument):
+    '''
+     - function - Lambda.
+     - argument - Value.
+    '''
+    assert type(function) is Lambda
+    environment = {function.parameter: argument}
+    environment.update(function.captures)
+    return evaluate(Evaluate(environment), function.body)
+
 ACTIONS = {
     'constant': lambda _, d: d['constant'],
     'name': lambda e, d: e.environment[d['name'].name],
@@ -39,11 +49,8 @@ class Evaluate:
 
     def apply(self, function, argument):
         function = evaluate(self, function)
-        assert type(function) is Lambda
         argument = evaluate(self, argument)
-        body_environment = dict(function.captures)
-        body_environment[function.parameter] = argument
-        return evaluate(Evaluate(body_environment), function.body)
+        return apply(function, argument)
 
 def built_ins():
     return {
