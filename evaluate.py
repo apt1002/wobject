@@ -25,8 +25,13 @@ ACTIONS = {
         d['parameter'].name,
         d['body'],
     ),
-    'apply': lambda e, d: e.apply(d['function'], d['argument']),
-    'table': lambda e, d: Table(evaluate_dict(e, d['table'].dict)),
+    'apply': lambda e, d: apply(
+        evaluate(e, d['function']),
+        evaluate(e, d['argument']),
+    ),
+    'table': lambda e, d: Table(
+        evaluate_dict(e, d['table'].dict),
+    ),
 }
 
 def evaluate(environment, expression):
@@ -46,11 +51,6 @@ class Evaluate:
     '''
     def __init__(self, environment):
         self.environment = environment
-
-    def apply(self, function, argument):
-        function = evaluate(self, function)
-        argument = evaluate(self, argument)
-        return apply(function, argument)
 
 def built_ins():
     return {
