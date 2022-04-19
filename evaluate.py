@@ -1,13 +1,21 @@
 from model import Table, Lambda, NULL
 
+ACTIONS = {
+    'constant': lambda e, d: e.constant(d['constant']),
+    'name': lambda e, d: e.name(d['name']),
+    'lambda': lambda e, d: e.lambda_(d['captures'], d['parameter'], d['body']),
+    'apply': lambda e, d: e.apply(d['function'], d['argument']),
+    'table': lambda e, d: e.table(d['table']),
+}
+
 def evaluate(environment, expression):
     '''
      - environment - Environment.
      - expression - model.Value representing code.
     '''
     assert type(expression) is Table, expression
-    case = environment.cases[expression.dict[''].name]
-    return case(expression.dict)
+    case = ACTIONS[expression.dict[''].name]
+    return case(environment, expression.dict)
 
 class Evaluate:
     '''
@@ -16,13 +24,6 @@ class Evaluate:
      - environment - dict from str to Value.
     '''
     def __init__(self, environment):
-        self.cases = {
-            'constant': lambda d: self.constant(d['constant']),
-            'name': lambda d: self.name(d['name']),
-            'lambda': lambda d: self.lambda_(d['captures'], d['parameter'], d['body']),
-            'apply': lambda d: self.apply(d['function'], d['argument']),
-            'table': lambda d: self.table(d['table']),
-        }
         self.environment = environment
 
     def constant(self, constant):
