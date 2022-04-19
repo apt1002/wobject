@@ -1,14 +1,18 @@
 from model import Table, Lambda, NULL
 
+def evaluate_dict(environment, dict_):
+    '''Map `evaluate()` over a dict.'''
+    return {
+        name: evaluate(environment, expression)
+        for name, expression in dict_.items()
+    }
+
 ACTIONS = {
     'constant': lambda _, d: d['constant'],
     'name': lambda e, d: e.environment[d['name'].name],
     'lambda': lambda e, d: e.lambda_(d['captures'], d['parameter'], d['body']),
     'apply': lambda e, d: e.apply(d['function'], d['argument']),
-    'table': lambda e, d: Table({
-        name: evaluate(e, expression)
-        for name, expression in d['table'].dict.items()
-    }),
+    'table': lambda e, d: Table(evaluate_dict(e, d['table'].dict)),
 }
 
 def evaluate(environment, expression):
@@ -30,11 +34,7 @@ class Evaluate:
         self.environment = environment
 
     def lambda_(self, captures, parameter, body):
-        captures = {
-            name: evaluate(self, expression)
-            for name, expression in captures.dict.items()
-        }
-        return Lambda(captures, parameter.name, body)
+        return Lambda(evaluate_dict(self, captures.dict), parameter.name, body)
 
     def apply(self, function, argument):
         function = evaluate(self, function)
