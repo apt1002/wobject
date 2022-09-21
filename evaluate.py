@@ -5,60 +5,58 @@ environment: a dict from str to Value. The environment provides values for
 captures and locals. Globals are constants compiled into the code, and not
 included in the environment.
 
-`ACTIONS` is the complete instruction set. It is a dict from opcode to function
-from (environment, code) to Value, where:
- - opcode - str.
- - environment - dict from str to Value.
- - code - dict from str.
+`ACTIONS` is the complete instruction set.
 '''
 
-from model import Table, Lambda, NULL
+from typing import Dict, Callable, cast
+from model import error, Value, Atom, Table, Lambda, NULL
 
-def evaluate_dict(environment, dict_):
+Environment = Dict[str, Value]
+
+def evaluate_dict(environment: Environment, dict_: Dict[str, Table]) -> Dict[str, Value]:
     '''Map `evaluate()` over a dict.'''
     return {
         name: evaluate(environment, expression)
         for name, expression in dict_.items()
     }
 
-def apply(function, argument):
+def apply(function: Value, argument: Value) -> Value:
     '''
-     - function - Lambda.
-     - argument - Value.
+     - function - Lambda, otherwise we'll `error()`.
     '''
-    assert type(function) is Lambda
+    if not isinstance(function, Lambda):
+        error(f"{function} is not a function")
     environment = {function.parameter: argument}
-    assert function.parameter not in function.captures
     environment.update(function.captures)
     return evaluate(environment, function.body)
 
-ACTIONS = {
+Code = Dict[str, Value]
+Action = Callable[[Environment, Code], Value]
+ACTIONS: Dict[str, Action] = {
     'constant': lambda _, d: d['constant'],
-    'name': lambda e, d: e[d['name'].name],
+    'name': lambda e, d: e[cast(Atom, d['name']).name],
     'lambda': lambda e, d: Lambda(
-        evaluate_dict(e, d['captures'].dict),
-        d['parameter'].name,
-        d['body'],
+        evaluate_dict(e, cast(Table, d['captures']).dict),
+        cast(Atom, d['parameter']).name,
+        cast(Table, d['body']),
     ),
     'apply': lambda e, d: apply(
-        evaluate(e, d['function']),
-        evaluate(e, d['argument']),
+        evaluate(e, cast(Table, d['function'])),
+        evaluate(e, cast(Table, d['argument'])),
     ),
     'table': lambda e, d: Table(
-        evaluate_dict(e, d['table'].dict),
+        evaluate_dict(e, cast(Table, d['table']).dict),
     ),
 }
 
-def evaluate(environment, expression):
+def evaluate(environment: Environment, expression: Table) -> Value:
     '''
-     - environment - dict from str to Value.
-     - expression - model.Value representing code.
+     - expression - model.Table representing code.
     '''
-    assert type(expression) is Table, expression
     case = ACTIONS[expression.dict[''].name]
     return case(environment, expression.dict)
 
-def built_ins():
+def built_ins() -> Environment:
     return {
         'null': NULL,
     }

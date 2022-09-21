@@ -1,16 +1,17 @@
-import code
-from model import error
+import model, code
+
+from typing import Dict, NamedTuple, Any
 from pypeg2 import Symbol, List, K, optional, csl, attr, maybe_some, name, parse as pypeg_parse
 
 Symbol.check_keywords = True
 
 class Expression(List):
-    def compile(self, environment):
-        assert isinstance(environment, code.Environment)
+    grammar: Any
+    def compile(self, environment: code.Environment) -> model.Table:
         '''
-        Returns `model.Tuple((Atom, Value, ...))`. See `code` for details.
+        Returns `model.Table`. See `code` for details.
         '''
-        e = self[0].compile(environment)
+        e: model.Table = self[0].compile(environment)
         for argument in self[1:]:
             e = code.apply(e, argument.compile(environment))
         return e
@@ -18,14 +19,19 @@ class Expression(List):
 class Name:
     grammar = name()
 
-    def compile(self, environment):
-        return environment.compile(self.name.name)
+    def compile(self, environment: code.Environment) -> model.Table:
+        return environment.compile(self.get_name())
+
+    def get_name(self) -> str:
+        return self.name.name # type: ignore
 
 class Lambda:
     grammar = K('fn'), attr('parameter', Name), '{', attr('body', Expression), '}'
+    body: Expression
+    parameter: Name
 
-    def compile(self, environment):
-        parameter = self.parameter.name.name
+    def compile(self, environment: code.Environment) -> model.Table:
+        parameter: str = self.parameter.get_name()
         body_environment = code.Environment(
             constant=lambda name: None if name == parameter else environment.constant(name)
         )
@@ -43,25 +49,28 @@ class TableEntry:
 class Table(List):
     grammar = '{', optional(csl(TableEntry)), '}' 
 
-    def compile(self, environment):
+    def compile(self, environment: code.Environment) -> model.Table:
         return code.table((entry.key.name.name, entry.value.compile(environment)) for entry in self)
 
 class Atom:
     grammar = '@', name()
 
-    def compile(self, environment):
-        return code.atom(self.name.name)
+    def compile(self, environment: code.Environment) -> model.Table:
+        return code.atom(self.get_name())
+
+    def get_name(self) -> str:
+        return self.name.name # type: ignore
 
 Expression.grammar = [Lambda, Table, Atom, Name], maybe_some('(', Expression, ')')
 
-def parse(source, environment):
+def parse(source: str, environment: Dict[str, model.Value]) -> model.Table:
     '''
      - source - str
      - environment - dict from str to Value.
     '''
     tree = pypeg_parse(source, Expression)
     env = code.Environment(constant=environment.get)
-    expr = tree.compile(env)
+    expr: model.Table = tree.compile(env)
     for name in env.free_variables:
-        error(f"Unknown variable {name}")
+        model.error(f"Unknown variable {name}")
     return expr
